@@ -1,10 +1,9 @@
 /**
  * 插件名: carousel.js
- * 版本：1.01
+ * 
  */
 ;(function (){
-    //初始化判断当前页的布尔值
-    var ib = false;
+
     //构造函数
    var Carousel = function (carrousel){
         var calSelf = this;
@@ -37,6 +36,8 @@
         }
         //自定义默认值
         this.Settings = this.extendObj(this.Settings,this.getSetting())
+        //初始化设置
+        this.setValue();
         //设置图片相对位置
         this.setPic();
         //点击切换下一张
@@ -85,7 +86,7 @@
                 //判断用户浏览是否为当前页面
                 //yes   执行
                 //no   不用理会
-                if(!window.ib){
+                if(document.hasFocus()){
                     _this.carrouselRote('left')
                 }
             },_this.Settings.timeSpan);
@@ -101,7 +102,7 @@
                 tempLeft;
             
             if(dir == 'left'){
-                //向左轮播时 第一张图片的样式属性等于最后一张
+                //向左轮播时 第一张图片左侧刚好是最后一张图片
                 tempWidth = _this.carrouselLat.offsetWidth;
                 tempHeight = _this.carrouselLat.offsetHeight;
                 tempZIndex = _this.carrouselLat.style.zIndex;
@@ -154,7 +155,6 @@
                 tempOpacity = _this.carrouselFir.style.opacity;
                 tempTop = _this.carrouselFir.offsetTop;
                 tempLeft = _this.carrouselFir.offsetLeft;
-
                 toArray(this.carrouselItems).forEach(function(item,index,array){
                     //最后一张图片的样式属性等于第一张的样式属性
                     if(index == (array.length-1)){
@@ -219,12 +219,12 @@
             }
             return top;
         },
-        setPic:function (){
-            var btnW = (this.Settings.width-this.Settings.carrouselWidth)/2;
-             //初始化 整体布局
+        setValue:function (){
+            //初始化 整体布局
             this.carrousel.style.width = this.Settings.width+'px';
             this.carrousel.style.height = this.Settings.height+'px';
 
+            var btnW = (this.Settings.width-this.Settings.carrouselWidth)/2;
             //按钮设置
             this.prevBtn.style.width = btnW+'px';
             this.prevBtn.style.height = this.Settings.height+'px';
@@ -234,26 +234,25 @@
             this.nextBtn.style.height = this.Settings.height+'px';
             this.nextBtn.style.zIndex = toArray(this.carrouselItems).length;
 
-            //获取所有图片 转化为数组
-            var sliceItems = toArray(this.carrouselItems);
-            // 获取最在中间那张图片的index值
-            var cItemIndex = Math.floor(sliceItems.length/2);
-            //截取中心图片
-            var itemCenter = sliceItems.slice(cItemIndex,cItemIndex+1);
-            //设置样式属性，由于截取的数组 所以后面要加索引
-                itemCenter[0].style.left = btnW+'px';
-                itemCenter[0].style.top = this.setCarrouselAlign(this.Settings.carrouselHeight)+'px';
-                itemCenter[0].style.width = this.Settings.carrouselWidth+'px';
-                itemCenter[0].style.height = this.Settings.carrouselHeight+'px';
-                itemCenter[0].style.zIndex = cItemIndex;
-            //截取 中心图片之后的图片元素
-            var rightSlice = sliceItems.slice(cItemIndex+1); 
-            //截取 中心图片之前的图片元素
-            var leftSlice = sliceItems.slice(0,cItemIndex).reverse();
-               
+            //第一帧 设置
+            this.carrouselFir.style.left = btnW+'px';
+            this.carrouselFir.style.top = this.setCarrouselAlign(this.Settings.carrouselHeight)+'px';
+            this.carrouselFir.style.width = this.Settings.carrouselWidth+'px';
+            this.carrouselFir.style.height = this.Settings.carrouselHeight+'px';
+            this.carrouselFir.style.zIndex = Math.floor(this.carrouselItems.length/2);
+        },
+        setPic:function (){
+            //设置其他图片相对位置
+            //获取第一张图片之后的所有图片
+            var sliceItems = toArray(this.carrouselItems).slice(1);
+            var sliceLength = sliceItems.length/2;
+            // 获取数组中需要在右侧排列的图片
+            var rightSlice = sliceItems.slice(0,sliceLength);
+            // 获取数组中需要在左侧排列的图片 并将其反转排列，方便 carrouselRote 函数获取最后一张图片
+            var leftSlice = sliceItems.slice(sliceLength).reverse();
             var level = Math.floor(this.carrouselItems.length/2);
-            // 获取中心 的left值
-            var firLeft = btnW;
+            // 获取第一帧 的left值
+            var firLeft=(this.Settings.width-this.Settings.carrouselWidth)/2;
             // 获取opacity的值
             var setOpt = this.Settings.setOpacity;
 
@@ -321,14 +320,6 @@
     
     window.onload = function(){
         Carousel.init(document.querySelectorAll('.rotate-box'));
-    }
-    //用户离开当前页面时关闭定时器
-    window.onblur=function(){
-        this.ib = true;
-    }
-    //用户回到当前页面时开启定时器
-    window.onfocus=function(){
-        this.ib = false;
     }
     
     //伪数组转化为真正数组方法
